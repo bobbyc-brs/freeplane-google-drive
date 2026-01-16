@@ -17,6 +17,7 @@ import org.freeplane.features.map.MapModel;
 import org.freeplane.features.mode.Controller;
 import org.freeplane.features.mode.ModeController;
 import org.freeplane.features.url.mindmapmode.MapLoader;
+import org.freeplane.plugin.googledrive.DriveMapTracker;
 import org.freeplane.plugin.googledrive.api.DriveFile;
 import org.freeplane.plugin.googledrive.api.GoogleDriveClient;
 import org.freeplane.plugin.googledrive.auth.GoogleAuthManager;
@@ -91,6 +92,7 @@ public class OpenFromGoogleDriveAction extends AFreeplaneAction {
 							mapName = mapName.substring(0, mapName.length() - 3);
 						}
 						map.getRootNode().setText(mapName);
+						DriveMapTracker.getInstance().registerMap(map, driveFile);
 					}
 				} catch (Exception ex) {
 					LogUtils.warn("Failed to load map from Google Drive", ex);

@@ -13,6 +13,7 @@ import org.freeplane.core.util.LogUtils;
 import org.freeplane.features.map.MapModel;
 import org.freeplane.features.map.mindmapmode.MMapController;
 import org.freeplane.features.mode.Controller;
+import org.freeplane.plugin.googledrive.DriveMapTracker;
 import org.freeplane.plugin.googledrive.api.DriveFile;
 import org.freeplane.plugin.googledrive.api.GoogleDriveClient;
 import org.freeplane.plugin.googledrive.auth.GoogleAuthManager;
@@ -49,22 +50,31 @@ public class SaveToGoogleDriveAction extends AFreeplaneAction {
 					authManager.getHttpTransport(),
 					authManager.getJsonFactory());
 
-			String defaultFileName = getDefaultFileName(map);
-
-			Frame frame = UITools.getCurrentFrame();
-			GoogleDriveFileBrowser browser = new GoogleDriveFileBrowser(frame, driveClient, true, defaultFileName);
-
-			if (browser.showDialog()) {
-				DriveFile selectedFolder = browser.getSelectedFolder();
-				String fileName = browser.getFileName();
-
-				if (selectedFolder != null && fileName != null && !fileName.isEmpty()) {
-					saveMapToDrive(driveClient, map, selectedFolder, fileName);
-				}
+			DriveMapTracker tracker = DriveMapTracker.getInstance();
+			if (tracker.isFromDrive(map)) {
+				updateExistingFile(driveClient, map, tracker.getDriveFile(map));
+			} else {
+				saveAsNewFile(driveClient, map);
 			}
 		} catch (IOException ex) {
 			LogUtils.warn("Failed to access Google Drive", ex);
 			UITools.errorMessage("Failed to access Google Drive: " + ex.getMessage());
+		}
+	}
+
+	private void saveAsNewFile(GoogleDriveClient driveClient, MapModel map) {
+		String defaultFileName = getDefaultFileName(map);
+
+		Frame frame = UITools.getCurrentFrame();
+		GoogleDriveFileBrowser browser = new GoogleDriveFileBrowser(frame, driveClient, true, defaultFileName);
+
+		if (browser.showDialog()) {
+			DriveFile selectedFolder = browser.getSelectedFolder();
+			String fileName = browser.getFileName();
+
+			if (selectedFolder != null && fileName != null && !fileName.isEmpty()) {
+				uploadNewFile(driveClient, map, selectedFolder, fileName);
+			}
 		}
 	}
 
@@ -80,7 +90,7 @@ public class SaveToGoogleDriveAction extends AFreeplaneAction {
 		return name;
 	}
 
-	private void saveMapToDrive(GoogleDriveClient driveClient, MapModel map, DriveFile folder, String fileName) {
+	private void uploadNewFile(GoogleDriveClient driveClient, MapModel map, DriveFile folder, String fileName) {
 		Controller controller = Controller.getCurrentController();
 		controller.getViewController().setWaitingCursor(true);
 
@@ -97,6 +107,8 @@ public class SaveToGoogleDriveAction extends AFreeplaneAction {
 				try {
 					DriveFile uploadedFile = get();
 					if (uploadedFile != null) {
+						DriveMapTracker.getInstance().registerMap(map, uploadedFile);
+
 						MMapController mapController = (MMapController) Controller
 								.getCurrentModeController().getMapController();
 						mapController.mapSaved(map, true);
@@ -106,6 +118,40 @@ public class SaveToGoogleDriveAction extends AFreeplaneAction {
 				} catch (Exception ex) {
 					LogUtils.warn("Failed to save map to Google Drive", ex);
 					UITools.errorMessage("Failed to save map: " + ex.getMessage());
+				}
+			}
+		};
+		worker.execute();
+	}
+
+	private void updateExistingFile(GoogleDriveClient driveClient, MapModel map, DriveFile existingFile) {
+		Controller controller = Controller.getCurrentController();
+		controller.getViewController().setWaitingCursor(true);
+
+		SwingWorker<DriveFile, Void> worker = new SwingWorker<DriveFile, Void>() {
+			@Override
+			protected DriveFile doInBackground() throws Exception {
+				InputStream mapStream = MapSerializer.serializeMapAsStream(map);
+				return driveClient.updateFile(existingFile.getId(), mapStream);
+			}
+
+			@Override
+			protected void done() {
+				controller.getViewController().setWaitingCursor(false);
+				try {
+					DriveFile updatedFile = get();
+					if (updatedFile != null) {
+						DriveMapTracker.getInstance().updateDriveFile(map, updatedFile);
+
+						MMapController mapController = (MMapController) Controller
+								.getCurrentModeController().getMapController();
+						mapController.mapSaved(map, true);
+
+						UITools.informationMessage("Map updated on Google Drive: " + updatedFile.getName());
+					}
+				} catch (Exception ex) {
+					LogUtils.warn("Failed to update map on Google Drive", ex);
+					UITools.errorMessage("Failed to update map: " + ex.getMessage());
 				}
 			}
 		};

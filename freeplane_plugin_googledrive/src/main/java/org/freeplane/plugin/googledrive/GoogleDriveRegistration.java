@@ -2,6 +2,7 @@ package org.freeplane.plugin.googledrive;
 
 import org.freeplane.features.mode.ModeController;
 import org.freeplane.plugin.googledrive.actions.OpenFromGoogleDriveAction;
+import org.freeplane.plugin.googledrive.actions.SaveToGoogleDriveAction;
 import org.freeplane.plugin.googledrive.auth.GoogleAuthManager;
 import org.freeplane.plugin.googledrive.auth.TokenStorage;
 
@@ -13,6 +14,7 @@ public class GoogleDriveRegistration {
 			GoogleAuthManager authManager = new GoogleAuthManager(tokenStorage);
 
 			modeController.addAction(new OpenFromGoogleDriveAction(authManager));
+			modeController.addAction(new SaveToGoogleDriveAction(authManager));
 		}
 	}
 

@@ -50,6 +50,10 @@ public class DriveFile {
 		return name != null && name.toLowerCase().endsWith(".mm");
 	}
 
+	public static DriveFile createRoot() {
+		return new DriveFile("root", "My Drive", true, "application/vnd.google-apps.folder");
+	}
+
 	@Override
 	public String toString() {
 		return name;

@@ -3,9 +3,11 @@ package org.freeplane.plugin.googledrive.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
@@ -77,6 +79,45 @@ public class GoogleDriveClient {
 	public InputStream downloadFile(String fileId) throws IOException {
 		return driveService.files().get(fileId)
 				.executeMediaAsInputStream();
+	}
+
+	public DriveFile uploadFile(String folderId, String fileName, InputStream content) throws IOException {
+		File fileMetadata = new File();
+		fileMetadata.setName(fileName);
+		fileMetadata.setParents(Collections.singletonList(folderId));
+
+		InputStreamContent mediaContent = new InputStreamContent("application/x-freemind", content);
+
+		File file = driveService.files().create(fileMetadata, mediaContent)
+				.setFields("id, name, mimeType, size, modifiedTime")
+				.execute();
+
+		return toDriveFile(file);
+	}
+
+	public DriveFile updateFile(String fileId, InputStream content) throws IOException {
+		InputStreamContent mediaContent = new InputStreamContent("application/x-freemind", content);
+
+		File file = driveService.files().update(fileId, null, mediaContent)
+				.setFields("id, name, mimeType, size, modifiedTime")
+				.execute();
+
+		return toDriveFile(file);
+	}
+
+	public DriveFile createFolder(String parentId, String folderName) throws IOException {
+		File fileMetadata = new File();
+		fileMetadata.setName(folderName);
+		fileMetadata.setMimeType(FOLDER_MIME_TYPE);
+		if (parentId != null) {
+			fileMetadata.setParents(Collections.singletonList(parentId));
+		}
+
+		File file = driveService.files().create(fileMetadata)
+				.setFields("id, name, mimeType, size, modifiedTime")
+				.execute();
+
+		return toDriveFile(file);
 	}
 
 	public DriveFile getFile(String fileId) throws IOException {

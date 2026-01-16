@@ -31,24 +31,34 @@ import org.freeplane.plugin.googledrive.api.GoogleDriveClient;
 public class GoogleDriveFileBrowser extends JDialog {
 
 	private static final long serialVersionUID = 1L;
-	private static final String TITLE = "Open from Google Drive";
+	private static final String OPEN_TITLE = "Open from Google Drive";
+	private static final String SAVE_TITLE = "Save to Google Drive";
 	private static final Dimension DEFAULT_SIZE = new Dimension(600, 500);
 
 	private final GoogleDriveClient driveClient;
+	private final boolean folderSelectionMode;
 	private final JTree fileTree;
 	private final DriveTreeModel treeModel;
 	private final JLabel breadcrumbLabel;
-	private final JButton openButton;
+	private final JButton actionButton;
 	private final JButton cancelButton;
 	private final JButton refreshButton;
 	private final JTextField searchField;
+	private final JTextField fileNameField;
+	private final JPanel fileNamePanel;
 
 	private DriveFile selectedFile;
+	private DriveFile selectedFolder;
 	private boolean approved;
 
 	public GoogleDriveFileBrowser(Frame owner, GoogleDriveClient driveClient) {
-		super(owner, TITLE, true);
+		this(owner, driveClient, false, null);
+	}
+
+	public GoogleDriveFileBrowser(Frame owner, GoogleDriveClient driveClient, boolean folderSelectionMode, String defaultFileName) {
+		super(owner, folderSelectionMode ? SAVE_TITLE : OPEN_TITLE, true);
 		this.driveClient = driveClient;
+		this.folderSelectionMode = folderSelectionMode;
 
 		treeModel = new DriveTreeModel();
 		fileTree = new JTree(treeModel);
@@ -57,14 +67,21 @@ public class GoogleDriveFileBrowser extends JDialog {
 		fileTree.setShowsRootHandles(true);
 
 		breadcrumbLabel = new JLabel("My Drive");
-		openButton = new JButton("Open");
+		actionButton = new JButton(folderSelectionMode ? "Save" : "Open");
 		cancelButton = new JButton("Cancel");
 		refreshButton = new JButton("Refresh");
 		searchField = new JTextField(20);
+		fileNameField = new JTextField(defaultFileName != null ? defaultFileName : "", 30);
+		fileNamePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
 		configureDialog();
 		layoutComponents();
 		attachListeners();
+
+		if (folderSelectionMode) {
+			selectedFolder = DriveFile.createRoot();
+			updateSaveButtonState();
+		}
 
 		loadRootFolder();
 	}
@@ -93,12 +110,23 @@ public class GoogleDriveFileBrowser extends JDialog {
 		JScrollPane scrollPane = new JScrollPane(fileTree);
 		add(scrollPane, BorderLayout.CENTER);
 
-		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		buttonPanel.add(openButton);
-		buttonPanel.add(cancelButton);
-		add(buttonPanel, BorderLayout.SOUTH);
+		JPanel southPanel = new JPanel(new BorderLayout());
 
-		openButton.setEnabled(false);
+		if (folderSelectionMode) {
+			fileNamePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+			fileNamePanel.add(new JLabel("File name:"));
+			fileNamePanel.add(fileNameField);
+			southPanel.add(fileNamePanel, BorderLayout.NORTH);
+		}
+
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		buttonPanel.add(actionButton);
+		buttonPanel.add(cancelButton);
+		southPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+		add(southPanel, BorderLayout.SOUTH);
+
+		actionButton.setEnabled(false);
 	}
 
 	private void attachListeners() {
@@ -109,7 +137,16 @@ public class GoogleDriveFileBrowser extends JDialog {
 				if (node instanceof DriveFileNode) {
 					DriveFile file = ((DriveFileNode) node).getDriveFile();
 					selectedFile = file;
-					openButton.setEnabled(!file.isFolder() && file.isMindMap());
+					if (folderSelectionMode) {
+						if (file.isFolder()) {
+							selectedFolder = file;
+							actionButton.setEnabled(true);
+						} else {
+							actionButton.setEnabled(selectedFolder != null);
+						}
+					} else {
+						actionButton.setEnabled(!file.isFolder() && file.isMindMap());
+					}
 					updateBreadcrumb(path);
 				}
 			}
@@ -137,18 +174,41 @@ public class GoogleDriveFileBrowser extends JDialog {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2 && selectedFile != null) {
-					if (!selectedFile.isFolder() && selectedFile.isMindMap()) {
-						approveSelection();
+					if (folderSelectionMode) {
+						// In folder selection mode, double-click on folder expands it (handled by tree)
+						// Double-click on file does nothing - user must click Save button
+					} else {
+						if (!selectedFile.isFolder() && selectedFile.isMindMap()) {
+							approveSelection();
+						}
 					}
 				}
 			}
 		});
 
-		openButton.addActionListener(e -> approveSelection());
+		actionButton.addActionListener(e -> approveSelection());
 		cancelButton.addActionListener(e -> dispose());
 		refreshButton.addActionListener(e -> refreshCurrentFolder());
 
 		searchField.addActionListener(e -> performSearch());
+
+		if (folderSelectionMode) {
+			fileNameField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+				@Override
+				public void insertUpdate(javax.swing.event.DocumentEvent e) { updateSaveButtonState(); }
+				@Override
+				public void removeUpdate(javax.swing.event.DocumentEvent e) { updateSaveButtonState(); }
+				@Override
+				public void changedUpdate(javax.swing.event.DocumentEvent e) { updateSaveButtonState(); }
+			});
+		}
+	}
+
+	private void updateSaveButtonState() {
+		if (folderSelectionMode) {
+			String fileName = fileNameField.getText().trim();
+			actionButton.setEnabled(selectedFolder != null && !fileName.isEmpty());
+		}
 	}
 
 	private void loadRootFolder() {
@@ -249,9 +309,17 @@ public class GoogleDriveFileBrowser extends JDialog {
 	}
 
 	private void approveSelection() {
-		if (selectedFile != null && !selectedFile.isFolder() && selectedFile.isMindMap()) {
-			approved = true;
-			dispose();
+		if (folderSelectionMode) {
+			String fileName = fileNameField.getText().trim();
+			if (selectedFolder != null && !fileName.isEmpty()) {
+				approved = true;
+				dispose();
+			}
+		} else {
+			if (selectedFile != null && !selectedFile.isFolder() && selectedFile.isMindMap()) {
+				approved = true;
+				dispose();
+			}
 		}
 	}
 
@@ -262,6 +330,18 @@ public class GoogleDriveFileBrowser extends JDialog {
 
 	public DriveFile getSelectedFile() {
 		return selectedFile;
+	}
+
+	public DriveFile getSelectedFolder() {
+		return selectedFolder;
+	}
+
+	public String getFileName() {
+		String name = fileNameField.getText().trim();
+		if (!name.toLowerCase().endsWith(".mm")) {
+			name = name + ".mm";
+		}
+		return name;
 	}
 
 }

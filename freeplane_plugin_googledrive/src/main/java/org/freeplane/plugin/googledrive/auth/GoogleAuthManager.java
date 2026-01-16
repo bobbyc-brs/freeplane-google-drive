@@ -20,7 +20,11 @@ import com.google.api.services.drive.DriveScopes;
 public class GoogleAuthManager {
 
 	private static final String CREDENTIALS_FILE_PATH = "/org/freeplane/plugin/googledrive/credentials.json";
-	private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_READONLY);
+	// DRIVE_READONLY for browsing all files/folders, DRIVE_FILE for creating/editing files
+	private static final List<String> SCOPES = java.util.Arrays.asList(
+			DriveScopes.DRIVE_READONLY,
+			DriveScopes.DRIVE_FILE
+	);
 
 	private final TokenStorage tokenStorage;
 	private final NetHttpTransport httpTransport;

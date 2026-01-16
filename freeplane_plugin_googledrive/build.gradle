@@ -1,0 +1,13 @@
+dependencies {
+    implementation project(':freeplane')
+
+    // Google Drive API dependencies (Java 8 compatible)
+    lib 'com.google.api-client:google-api-client:1.35.2'
+    lib 'com.google.oauth-client:google-oauth-client-jetty:1.34.1'
+    lib 'com.google.apis:google-api-services-drive:v3-rev20230520-2.0.0'
+    lib 'com.google.http-client:google-http-client-gson:1.43.3'
+
+    // Jetty for local OAuth callback (Java 8 compatible - 9.4.x is last Java 8 version)
+    lib 'org.eclipse.jetty:jetty-server:9.4.51.v20230217'
+    lib 'org.eclipse.jetty:jetty-servlet:9.4.51.v20230217'
+}

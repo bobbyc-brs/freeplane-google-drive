@@ -94,6 +94,7 @@
 			<Entry builder="separator"  />
 			<Entry name="OpenAction" accelerator="control O" />
 			<Entry name="OpenURLMapAction" />
+			<Entry name="OpenFromGoogleDriveAction" plugin="org.freeplane.plugin.googledrive" />
 			<Entry name="lastOpenedMaps">
 				<Entry builder="lastOpenedMaps" />
 				<Entry builder="noActions" />

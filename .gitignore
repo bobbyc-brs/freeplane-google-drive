@@ -265,3 +265,6 @@ gradle-app.setting
 # Local testing scripts
 test_encryption_quick.sh
 .classpath_cache
+
+# Google Drive plugin credentials (sensitive)
+freeplane_plugin_googledrive/**/credentials.json

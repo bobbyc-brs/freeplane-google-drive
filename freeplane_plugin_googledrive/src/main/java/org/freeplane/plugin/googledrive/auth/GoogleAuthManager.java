@@ -81,8 +81,24 @@ public class GoogleAuthManager {
 		}
 
 		try {
-			Credential credential = getCredential();
-			return credential != null && credential.getAccessToken() != null;
+			GoogleClientSecrets clientSecrets = loadClientSecrets();
+			File tokenDir = tokenStorage.getTokenDirectory();
+
+			GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+					httpTransport, jsonFactory, clientSecrets, SCOPES)
+					.setDataStoreFactory(new FileDataStoreFactory(tokenDir))
+					.setAccessType("offline")
+					.build();
+
+			Credential credential = flow.loadCredential("user");
+			if (credential != null && credential.getRefreshToken() != null) {
+				if (isCredentialExpired(credential)) {
+					credential.refreshToken();
+				}
+				cachedCredential = credential;
+				return credential.getAccessToken() != null;
+			}
+			return false;
 		} catch (IOException e) {
 			return false;
 		}

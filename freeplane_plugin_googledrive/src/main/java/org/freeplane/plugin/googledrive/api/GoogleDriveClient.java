@@ -127,6 +127,13 @@ public class GoogleDriveClient {
 		return toDriveFile(file);
 	}
 
+	public DriveFile getFileMetadata(String fileId) throws IOException {
+		File file = driveService.files().get(fileId)
+				.setFields("id, name, modifiedTime")
+				.execute();
+		return toDriveFile(file);
+	}
+
 	private List<DriveFile> convertTodriveFiles(List<File> files) {
 		List<DriveFile> driveFiles = new ArrayList<>();
 		if (files != null) {

@@ -90,7 +90,7 @@ public class SaveToGoogleDriveAction extends AFreeplaneAction {
 		return name;
 	}
 
-	private void uploadNewFile(GoogleDriveClient driveClient, MapModel map, DriveFile folder, String fileName) {
+	void uploadNewFile(GoogleDriveClient driveClient, MapModel map, DriveFile folder, String fileName) {
 		Controller controller = Controller.getCurrentController();
 		controller.getViewController().setWaitingCursor(true);
 

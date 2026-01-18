@@ -66,7 +66,7 @@ public class GoogleDriveFileBrowser extends JDialog {
 		fileTree.setRootVisible(true);
 		fileTree.setShowsRootHandles(true);
 
-		breadcrumbLabel = new JLabel("My Drive");
+		breadcrumbLabel = new JLabel("Google Drive");
 		actionButton = new JButton(folderSelectionMode ? "Save" : "Open");
 		cancelButton = new JButton("Cancel");
 		refreshButton = new JButton("Refresh");
@@ -214,21 +214,27 @@ public class GoogleDriveFileBrowser extends JDialog {
 	private void loadRootFolder() {
 		setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 
-		SwingWorker<List<DriveFile>, Void> worker = new SwingWorker<List<DriveFile>, Void>() {
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+			private List<DriveFile> myDriveFiles;
+			private List<DriveFile> sharedFiles;
+
 			@Override
-			protected List<DriveFile> doInBackground() throws Exception {
-				return driveClient.listFiles("root");
+			protected Void doInBackground() throws Exception {
+				myDriveFiles = driveClient.listFiles("root");
+				sharedFiles = driveClient.listSharedFiles();
+				return null;
 			}
 
 			@Override
 			protected void done() {
 				setCursor(java.awt.Cursor.getDefaultCursor());
 				try {
-					List<DriveFile> files = get();
-					treeModel.setRootFiles(files);
+					get();
+					treeModel.setRootFiles(myDriveFiles);
+					treeModel.setSharedFiles(sharedFiles);
 					fileTree.expandRow(0);
 				} catch (Exception e) {
-					LogUtils.warn("Failed to load Google Drive root folder", e);
+					LogUtils.warn("Failed to load Google Drive folders", e);
 					UITools.errorMessage("Failed to load Drive files: " + e.getMessage());
 				}
 			}
@@ -263,6 +269,7 @@ public class GoogleDriveFileBrowser extends JDialog {
 	private void refreshCurrentFolder() {
 		treeModel.clearAndReload();
 		loadRootFolder();
+		breadcrumbLabel.setText("Google Drive");
 	}
 
 	private void performSearch() {

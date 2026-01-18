@@ -54,6 +54,22 @@ public class DriveFile {
 		return new DriveFile("root", "My Drive", true, "application/vnd.google-apps.folder");
 	}
 
+	public static DriveFile createSharedWithMe() {
+		return new DriveFile("shared", "Shared with me", true, "application/vnd.google-apps.folder");
+	}
+
+	public static DriveFile createTopLevel() {
+		return new DriveFile("toplevel", "Google Drive", true, "application/vnd.google-apps.folder");
+	}
+
+	public boolean isSharedWithMeFolder() {
+		return "shared".equals(id);
+	}
+
+	public boolean isMyDriveFolder() {
+		return "root".equals(id);
+	}
+
 	@Override
 	public String toString() {
 		return name;

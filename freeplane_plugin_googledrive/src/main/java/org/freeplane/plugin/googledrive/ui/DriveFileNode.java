@@ -35,6 +35,11 @@ class DriveFileNode implements TreeNode {
 		childrenLoaded = true;
 	}
 
+	void addChildNode(DriveFileNode child) {
+		children.add(child);
+		childrenLoaded = true;
+	}
+
 	boolean areChildrenLoaded() {
 		return childrenLoaded;
 	}

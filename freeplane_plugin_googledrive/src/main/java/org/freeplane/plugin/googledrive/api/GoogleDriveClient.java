@@ -134,6 +134,27 @@ public class GoogleDriveClient {
 		return toDriveFile(file);
 	}
 
+	public List<DriveFile> listSharedFiles() throws IOException {
+		List<DriveFile> allFiles = new ArrayList<>();
+		String pageToken = null;
+		String query = "sharedWithMe = true and trashed = false";
+
+		do {
+			FileList result = driveService.files().list()
+					.setQ(query)
+					.setFields("nextPageToken, " + FIELDS)
+					.setOrderBy("folder,name")
+					.setPageSize(100)
+					.setPageToken(pageToken)
+					.execute();
+
+			allFiles.addAll(convertTodriveFiles(result.getFiles()));
+			pageToken = result.getNextPageToken();
+		} while (pageToken != null);
+
+		return allFiles;
+	}
+
 	private List<DriveFile> convertTodriveFiles(List<File> files) {
 		List<DriveFile> driveFiles = new ArrayList<>();
 		if (files != null) {

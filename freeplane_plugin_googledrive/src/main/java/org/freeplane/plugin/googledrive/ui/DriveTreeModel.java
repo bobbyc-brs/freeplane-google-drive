@@ -13,17 +13,41 @@ import org.freeplane.plugin.googledrive.api.DriveFile;
 class DriveTreeModel implements TreeModel {
 
 	private final DriveFileNode root;
+	private final DriveFileNode myDriveNode;
+	private final DriveFileNode sharedWithMeNode;
 	private final List<TreeModelListener> listeners;
 
 	DriveTreeModel() {
-		DriveFile rootFile = new DriveFile("root", "My Drive", true, null);
-		this.root = new DriveFileNode(rootFile, null);
+		DriveFile topLevel = DriveFile.createTopLevel();
+		this.root = new DriveFileNode(topLevel, null);
+
+		DriveFile myDrive = DriveFile.createRoot();
+		this.myDriveNode = new DriveFileNode(myDrive, root);
+		root.addChildNode(myDriveNode);
+
+		DriveFile sharedWithMe = DriveFile.createSharedWithMe();
+		this.sharedWithMeNode = new DriveFileNode(sharedWithMe, root);
+		root.addChildNode(sharedWithMeNode);
+
 		this.listeners = new ArrayList<>();
 	}
 
+	DriveFileNode getMyDriveNode() {
+		return myDriveNode;
+	}
+
+	DriveFileNode getSharedWithMeNode() {
+		return sharedWithMeNode;
+	}
+
 	void setRootFiles(List<DriveFile> files) {
-		root.setChildren(files);
+		myDriveNode.setChildren(files);
 		fireTreeStructureChanged();
+	}
+
+	void setSharedFiles(List<DriveFile> files) {
+		sharedWithMeNode.setChildren(files);
+		fireTreeNodesChanged(sharedWithMeNode);
 	}
 
 	void setChildren(DriveFileNode parentNode, List<DriveFile> files) {
@@ -32,7 +56,8 @@ class DriveTreeModel implements TreeModel {
 	}
 
 	void clearAndReload() {
-		root.clearChildren();
+		myDriveNode.clearChildren();
+		sharedWithMeNode.clearChildren();
 		fireTreeStructureChanged();
 	}
 

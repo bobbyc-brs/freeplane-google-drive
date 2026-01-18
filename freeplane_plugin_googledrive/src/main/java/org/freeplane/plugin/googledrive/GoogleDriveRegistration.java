@@ -8,8 +8,12 @@ import org.freeplane.plugin.googledrive.actions.SaveAsToGoogleDriveAction;
 import org.freeplane.plugin.googledrive.actions.SaveToGoogleDriveAction;
 import org.freeplane.plugin.googledrive.auth.GoogleAuthManager;
 import org.freeplane.plugin.googledrive.auth.TokenStorage;
+import org.freeplane.plugin.googledrive.util.DriveChangeMonitor;
+import org.freeplane.plugin.googledrive.util.DriveChangeNotifier;
 
 public class GoogleDriveRegistration {
+
+	private static DriveChangeMonitor changeMonitor;
 
 	public GoogleDriveRegistration(ModeController modeController) {
 		if ("MindMap".equals(modeController.getModeName())) {
@@ -23,7 +27,19 @@ public class GoogleDriveRegistration {
 
 			modeController.removeActionIfSet("SaveAction");
 			modeController.addAction(new GoogleDriveAwareSaveAction(authManager));
+
+			initializeChangeMonitor(authManager);
 		}
+	}
+
+	private void initializeChangeMonitor(GoogleAuthManager authManager) {
+		changeMonitor = new DriveChangeMonitor(authManager);
+		changeMonitor.setChangeListener(new DriveChangeNotifier(authManager));
+		changeMonitor.start();
+	}
+
+	public static DriveChangeMonitor getChangeMonitor() {
+		return changeMonitor;
 	}
 
 }

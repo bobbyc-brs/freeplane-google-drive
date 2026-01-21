@@ -195,7 +195,7 @@ public class GoogleDriveAwareSaveAction extends AFreeplaneAction {
 			String fileName = browser.getFileName();
 
 			if (selectedFolder != null && fileName != null && !fileName.isEmpty()) {
-				new SaveToGoogleDriveAction(authManager).uploadNewFile(driveClient, map, selectedFolder, fileName);
+				DriveSaveService.uploadNewFile(driveClient, map, selectedFolder, fileName, result -> {});
 			}
 		}
 	}

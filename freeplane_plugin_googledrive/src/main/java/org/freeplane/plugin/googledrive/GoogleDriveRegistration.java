@@ -3,9 +3,9 @@ package org.freeplane.plugin.googledrive;
 import org.freeplane.features.mode.ModeController;
 import org.freeplane.plugin.googledrive.actions.GoogleDriveAwareSaveAction;
 import org.freeplane.plugin.googledrive.actions.LogoutFromGoogleDriveAction;
+import org.freeplane.plugin.googledrive.actions.NewMapToGoogleDriveAction;
 import org.freeplane.plugin.googledrive.actions.OpenFromGoogleDriveAction;
 import org.freeplane.plugin.googledrive.actions.SaveAsToGoogleDriveAction;
-import org.freeplane.plugin.googledrive.actions.SaveToGoogleDriveAction;
 import org.freeplane.plugin.googledrive.auth.GoogleAuthManager;
 import org.freeplane.plugin.googledrive.auth.TokenStorage;
 import org.freeplane.plugin.googledrive.util.DriveChangeMonitor;
@@ -20,8 +20,8 @@ public class GoogleDriveRegistration {
 			TokenStorage tokenStorage = new TokenStorage();
 			GoogleAuthManager authManager = new GoogleAuthManager(tokenStorage);
 
+			modeController.addAction(new NewMapToGoogleDriveAction(authManager));
 			modeController.addAction(new OpenFromGoogleDriveAction(authManager));
-			modeController.addAction(new SaveToGoogleDriveAction(authManager));
 			modeController.addAction(new SaveAsToGoogleDriveAction(authManager));
 			modeController.addAction(new LogoutFromGoogleDriveAction(authManager));
 

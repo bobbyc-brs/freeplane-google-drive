@@ -9,32 +9,29 @@ import org.freeplane.core.ui.components.UITools;
 import org.freeplane.core.util.LogUtils;
 import org.freeplane.features.map.MapModel;
 import org.freeplane.features.mode.Controller;
+import org.freeplane.features.mode.ModeController;
+import org.freeplane.features.mode.mindmapmode.MModeController;
+import org.freeplane.features.url.mindmapmode.MFileManager;
 import org.freeplane.plugin.googledrive.api.DriveFile;
 import org.freeplane.plugin.googledrive.api.GoogleDriveClient;
 import org.freeplane.plugin.googledrive.auth.GoogleAuthManager;
 import org.freeplane.plugin.googledrive.ui.GoogleDriveFileBrowser;
 import org.freeplane.plugin.googledrive.util.DriveSaveService;
 
-public class SaveAsToGoogleDriveAction extends AFreeplaneAction {
+public class NewMapToGoogleDriveAction extends AFreeplaneAction {
 
 	private static final long serialVersionUID = 1L;
-	private static final String ACTION_IDENTIFIER = "SaveAsToGoogleDriveAction";
+	private static final String ACTION_IDENTIFIER = "NewMapToGoogleDriveAction";
 
 	private final GoogleAuthManager authManager;
 
-	public SaveAsToGoogleDriveAction(GoogleAuthManager authManager) {
+	public NewMapToGoogleDriveAction(GoogleAuthManager authManager) {
 		super(ACTION_IDENTIFIER);
 		this.authManager = authManager;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		MapModel map = Controller.getCurrentController().getMap();
-		if (map == null) {
-			UITools.errorMessage("No map is currently open.");
-			return;
-		}
-
 		try {
 			if (!authManager.isAuthenticated()) {
 				authManager.getCredential();
@@ -45,17 +42,15 @@ public class SaveAsToGoogleDriveAction extends AFreeplaneAction {
 					authManager.getHttpTransport(),
 					authManager.getJsonFactory());
 
-			String defaultFileName = getDefaultFileName(map);
-
 			Frame frame = UITools.getCurrentFrame();
-			GoogleDriveFileBrowser browser = new GoogleDriveFileBrowser(frame, driveClient, true, defaultFileName);
+			GoogleDriveFileBrowser browser = new GoogleDriveFileBrowser(frame, driveClient, true, "New Mind Map.mm");
 
 			if (browser.showDialog()) {
 				DriveFile selectedFolder = browser.getSelectedFolder();
 				String fileName = browser.getFileName();
 
 				if (selectedFolder != null && fileName != null && !fileName.isEmpty()) {
-					DriveSaveService.uploadNewFile(driveClient, map, selectedFolder, fileName, result -> {});
+					createAndSaveNewMap(driveClient, selectedFolder, fileName);
 				}
 			}
 		} catch (IOException ex) {
@@ -64,16 +59,19 @@ public class SaveAsToGoogleDriveAction extends AFreeplaneAction {
 		}
 	}
 
-	private String getDefaultFileName(MapModel map) {
-		String name = map.getRootNode().getText();
-		if (name == null || name.isEmpty()) {
-			name = "Untitled";
+	private void createAndSaveNewMap(GoogleDriveClient driveClient, DriveFile folder, String fileName) {
+		ModeController modeController = Controller.getCurrentController().getModeController(MModeController.MODENAME);
+		MapModel map = MFileManager.getController(modeController).newMapFromDefaultTemplate();
+
+		if (map != null) {
+			String mapName = fileName;
+			if (mapName.toLowerCase().endsWith(".mm")) {
+				mapName = mapName.substring(0, mapName.length() - 3);
+			}
+			map.getRootNode().setText(mapName);
+
+			DriveSaveService.uploadNewFile(driveClient, map, folder, fileName, result -> {});
 		}
-		name = name.replaceAll("[^a-zA-Z0-9\\-_\\. ]", "_");
-		if (!name.toLowerCase().endsWith(".mm")) {
-			name = name + ".mm";
-		}
-		return name;
 	}
 
 }

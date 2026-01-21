@@ -78,6 +78,50 @@ public class DriveSaveService {
 		executeUpdate(client, map, driveFile, onComplete);
 	}
 
+	public static void uploadNewFile(GoogleDriveClient client, MapModel map, DriveFile folder, String fileName,
+			Consumer<SaveResult> onComplete) {
+		if (map == null) {
+			onComplete.accept(SaveResult.NO_MAP);
+			return;
+		}
+
+		Controller controller = Controller.getCurrentController();
+		controller.getViewController().setWaitingCursor(true);
+
+		SwingWorker<DriveFile, Void> worker = new SwingWorker<DriveFile, Void>() {
+			@Override
+			protected DriveFile doInBackground() throws Exception {
+				InputStream mapStream = MapSerializer.serializeMapAsStream(map);
+				return client.uploadFile(folder.getId(), fileName, mapStream);
+			}
+
+			@Override
+			protected void done() {
+				controller.getViewController().setWaitingCursor(false);
+				try {
+					DriveFile uploadedFile = get();
+					if (uploadedFile != null) {
+						DriveMapTracker.getInstance().registerMap(map, uploadedFile);
+
+						MMapController mapController = (MMapController) Controller
+								.getCurrentModeController().getMapController();
+						mapController.mapSaved(map, true);
+
+						controller.getViewController().out("Saved to Google Drive: " + uploadedFile.getName());
+						onComplete.accept(SaveResult.SUCCESS);
+					} else {
+						onComplete.accept(SaveResult.FAILED);
+					}
+				} catch (Exception ex) {
+					LogUtils.warn("Failed to upload map to Google Drive", ex);
+					UITools.errorMessage("Failed to save map: " + ex.getMessage());
+					onComplete.accept(SaveResult.FAILED);
+				}
+			}
+		};
+		worker.execute();
+	}
+
 	private static void executeUpdate(GoogleDriveClient client, MapModel map, DriveFile driveFile,
 			Consumer<SaveResult> onComplete) {
 		Controller controller = Controller.getCurrentController();

@@ -29,6 +29,9 @@ public class Activator implements BundleActivator {
 
 	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
+		if (GoogleDriveRegistration.getChangeMonitor() != null) {
+			GoogleDriveRegistration.getChangeMonitor().shutdown();
+		}
 	}
 
 }

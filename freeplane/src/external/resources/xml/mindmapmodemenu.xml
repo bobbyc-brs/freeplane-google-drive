@@ -86,11 +86,11 @@
 			<Entry name="NewMapAction" accelerator="control N" />
 			<Entry name="new_map_from_user_templates" />
 			<Entry name="EncryptedMap" />
+			<Entry name="NewMapToGoogleDriveAction" plugin="org.freeplane.plugin.googledrive" />
 			<Entry builder="separator" />
 			<Entry name="SaveAction" accelerator="control S" usedBy = "EDITOR" />
 			<Entry name="SaveAsAction" accelerator="control shift S" />
 			<Entry name="SaveAll" />
-			<Entry name="SaveToGoogleDriveAction" plugin="org.freeplane.plugin.googledrive" />
 			<Entry name="SaveAsToGoogleDriveAction" plugin="org.freeplane.plugin.googledrive" />
 			<Entry name="RevertAction"/>
 			<Entry builder="separator"  />

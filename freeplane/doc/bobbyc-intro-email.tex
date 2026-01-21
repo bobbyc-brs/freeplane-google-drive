@@ -1,0 +1,87 @@
+\documentclass[11pt]{letter}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\signature{Bobby Chawla}
+\address{Bobby Chawla\\bobby.chawla@brightersight.ca}
+
+\begin{document}
+
+\begin{letter}{Freeplane Development Team}
+
+\opening{Dear Freeplane Maintainers,}
+
+I hope this message finds you well. I'm reaching out to share a plugin I've been developing for Freeplane: \textbf{Google Drive Integration}.
+
+\section*{What It Does}
+
+The plugin enables seamless cloud storage integration, allowing users to:
+
+\begin{itemize}[nosep]
+    \item \textbf{Open mind maps directly from Google Drive} -- browse folders, search files, access both ``My Drive'' and ``Shared with me''
+    \item \textbf{Save transparently to Drive} -- Ctrl+S works naturally for Drive-loaded maps
+    \item \textbf{Detect conflicts} -- warns when a file has been modified remotely since opening
+    \item \textbf{Monitor for remote changes} -- background polling notifies users when collaborators modify shared files
+    \item \textbf{Create new maps on Drive} -- start fresh and save directly to cloud storage
+\end{itemize}
+
+\section*{Why This Matters}
+
+Many users work across multiple devices or collaborate with others. Currently, this requires manually downloading, editing, and re-uploading files. This plugin eliminates that friction:
+
+\begin{itemize}[nosep]
+    \item \textbf{Multi-device workflow} -- start a map on desktop, continue on laptop
+    \item \textbf{Team collaboration} -- share maps via Drive with conflict awareness
+    \item \textbf{Automatic backup} -- maps live in the cloud, not just local storage
+    \item \textbf{Familiar UX} -- integrates with existing Save/Open paradigm
+\end{itemize}
+
+\section*{Technical Approach}
+
+The plugin follows Freeplane's existing patterns:
+
+\begin{itemize}[nosep]
+    \item Standard OSGi bundle structure with proper lifecycle management
+    \item Uses Google's official Java client libraries (Java 8 compatible)
+    \item Extracted business logic into testable service classes
+    \item Non-blocking operations via SwingWorker
+    \item OAuth2 authentication with secure token storage
+\end{itemize}
+
+\section*{Current Status}
+
+The core functionality is working:
+\begin{itemize}[nosep]
+    \item Open/Save/Save As operations
+    \item Conflict detection and resolution
+    \item Remote change monitoring (5-second polling)
+    \item Proper shutdown handling
+\end{itemize}
+
+\section*{Repository}
+
+The code is available at:
+
+\begin{center}
+\url{https://github.com/bobbyc-brs/freeplane-google-drive}\\
+Branch: \texttt{Google-Drive-BobbyC}
+\end{center}
+
+\section*{Request}
+
+I would greatly appreciate your feedback on:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Architecture} -- Does this align with Freeplane's plugin conventions?
+    \item \textbf{Integration points} -- Are there better hooks I should use?
+    \item \textbf{Feature scope} -- What would make this most useful for the community?
+    \item \textbf{Path to inclusion} -- What would be needed for potential merge into main?
+\end{enumerate}
+
+I'm happy to refactor, add tests, or adjust the approach based on your guidance. This is my first contribution to Freeplane, and I want to make sure it meets the project's standards.
+
+\closing{Best regards,}
+
+\end{letter}
+\end{document}

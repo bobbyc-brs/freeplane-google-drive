@@ -237,3 +237,87 @@ git diff | head -20  # Verify only expected changes, no deletions
 - Windows installer via Inno Setup
 - macOS DMG with codesigning support
 - Linux packages for Debian-based systems
+
+## Google Drive Plugin (freeplane_plugin_googledrive)
+
+### Overview
+Cloud storage integration allowing users to open, edit, and save mind maps directly from/to Google Drive. Developed as an OSGi plugin following Freeplane's architecture patterns.
+
+### Implemented Features (Phases 1-4)
+
+#### Phase 1: Open from Google Drive
+- Browse Google Drive with folder navigation
+- Search for .mm files
+- View both "My Drive" and "Shared with me" sections
+- Download and open maps in Freeplane
+
+#### Phase 2: Save to Google Drive
+- Save new maps to chosen Drive location
+- "Save As to Google Drive" for uploading local maps
+
+#### Phase 3: Seamless Save Integration
+- **Ctrl+S saves directly to Drive** for maps loaded from Drive
+- Conflict detection comparing local vs remote modification times
+- Conflict resolution dialog: Overwrite, Reload, Save As New, Cancel
+- Maps track their Drive origin via `DriveMapTracker`
+
+#### Phase 4: Remote Change Monitoring
+- Background polling (5-second interval) for remote changes
+- Notification when files modified by others
+- Options to reload latest version or ignore
+
+### Current Menu Structure
+```
+File
+├── New map (Ctrl+N)
+├── New from templates...
+├── Encrypted map
+├── New map on Google Drive...
+├── ─────────────
+├── Save (Ctrl+S)                ← Handles Drive maps automatically
+├── Save As...
+├── Save All
+├── Save As to Google Drive...   ← For uploading local maps
+├── ...
+├── Open (Ctrl+O)
+├── Open from URL...
+├── Open from Google Drive...
+├── Sign out of Google Drive
+```
+
+### Key Classes
+- **GoogleDriveRegistration** - Plugin initialization, action registration
+- **DriveMapTracker** - Tracks which maps came from Drive, modification times
+- **GoogleDriveClient** - Google Drive API wrapper
+- **GoogleAuthManager** - OAuth2 authentication flow
+- **DriveSaveService** - Business logic for saving with conflict detection
+- **DriveChangeMonitor** - Background polling for remote changes
+- **GoogleDriveFileBrowser** - UI for browsing Drive folders/files
+
+### Build Commands
+```bash
+# Compile plugin
+gradle :freeplane_plugin_googledrive:compileJava
+
+# Build with dependencies copied to BIN/
+gradle :freeplane_plugin_googledrive:build
+
+# Full distribution
+gradle dist
+```
+
+### OAuth Setup
+The plugin requires Google OAuth credentials:
+1. Create OAuth 2.0 Client ID (Desktop app) in Google Cloud Console
+2. Enable Google Drive API
+3. Place `credentials.json` in:
+   `freeplane_plugin_googledrive/src/main/resources/org/freeplane/plugin/googledrive/`
+
+### Potential Future Enhancements
+- **UI indicator** showing when a map is from Google Drive (title bar or tab)
+- **Configurable polling interval** via preferences
+- **Offline mode** with sync queue for when connectivity returns
+- **Shared editing awareness** showing who else has the file open
+- **Version history** integration with Drive's revision system
+- **Folder sync** for automatic backup of local maps to Drive
+- **Other cloud providers** (OneDrive, Dropbox) using similar architecture
